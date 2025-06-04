@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ぬいぐるウォッシュ</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #87CEEB, #E0F6FF);
+            font-family: 'Arial', sans-serif;
+            user-select: none;
+            overflow: hidden;
+        }
+
+        .game-container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .info-bar {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+
+        .score, .timer {
+            background: rgba(255,255,255,0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .game-area {
+            width: 800px;
+            height: 500px;
+            position: relative;
+            background: linear-gradient(45deg, #FFE5B4, #FFFACD);
+            border: 3px solid #DDD;
+            overflow: hidden;
+        }
+
+        .animal {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            border: 3px solid;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .animal:hover {
+            transform: scale(1.1);
+        }
+
+        .animal.dirty {
+            filter: grayscale(100%) brightness(0.5);
+            border-color: #8B4513;
+        }
+
+        .animal.cleaning {
+            animation: shake 0.3s ease-in-out;
+        }
+
+        .animal.clean {
+            filter: none;
+            border-color: #FFD700;
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+        }
+
+        .mouse { background: #DDD; }
+        .hamster { background: #F4A460; }
+        .cat { background: #FFA500; }
+        .dog { background: #8B4513; }
+        .elephant { background: #A9A9A9; }
+        .giraffe { background: #DAA520; }
+
+        .soap {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle, #87CEEB, #4682B4);
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            border: 3px solid #1E90FF;
+            box-shadow: 0 4px 12px rgba(30, 144, 255, 0.5);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        .paint {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle, #8B008B, #4B0082);
+            border-radius: 50%;
+            border: 2px solid #800080;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes glow {
+            0% { box-shadow: 0 4px 12px rgba(30, 144, 255, 0.5); }
+            100% { box-shadow: 0 6px 20px rgba(30, 144, 255, 0.8); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .click-indicator {
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            pointer-events: none;
+            animation: fadeUp 1s ease-out forwards;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+
+        @keyframes fadeUp {
+            0% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-50px); }
+        }
+
+        .start-screen, .game-over-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            text-align: center;
+        }
+
+        .start-btn, .restart-btn {
+            background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 18px;
+            border-radius: 30px;
+            cursor: pointer;
+            margin-top: 20px;
+            transition: transform 0.2s ease;
+        }
+
+        .start-btn:hover, .restart-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .speed-mode {
+            animation: speedGlow 0.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes speedGlow {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .instructions {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="header">
+            <h1>🧼 ぬいぐるウォッシュ 🐾</h1>
+            <div class="info-bar">
+                <div class="score">スコア: <span id="score">0</span></div>
+                <div class="timer">残り時間: <span id="timer">60</span>秒</div>
+            </div>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="start-screen" id="startScreen">
+                <h2>🌟 ぬいぐるウォッシュゲーム 🌟</h2>
+                <div class="instructions">
+                    <p><strong>🎮 遊び方：</strong></p>
+                    <p>🐭 ネズミ・ハムスター: 2回クリック → 1点</p>
+                    <p>🐱 猫・犬: 3回クリック → 3点</p>
+                    <p>🐘 ゾウ・キリン: 4回クリック → 5点</p>
+                    <p>🧼 石鹸: 5回クリック → 周囲の動物も綺麗に！</p>
+                    <p>⚠️ 紫のペンキは踏まないように！</p>
+                    <p>⏰ 残り10秒でスピードアップモード！</p>
+                </div>
+                <button class="start-btn" onclick="startGame()">ゲーム開始！</button>
+            </div>
+            
+            <div class="game-over-screen" id="gameOverScreen" style="display: none;">
+                <h2>🎉 ゲーム終了！ 🎉</h2>
+                <p>最終スコア: <span id="finalScore">0</span>点</p>
+                <p id="scoreMessage"></p>
+                <button class="restart-btn" onclick="restartGame()">もう一度プレイ</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let gameState = {
+            score: 0,
+            timeLeft: 60,
+            gameRunning: false,
+            speedMode: false,
+            animals: [],
+            soaps: [],
+            paints: []
+        };
+
+        const animalTypes = [
+            { type: 'mouse', emoji: '🐭', clicks: 2, points: 1, class: 'mouse' },
+            { type: 'hamster', emoji: '🐹', clicks: 2, points: 1, class: 'hamster' },
+            { type: 'cat', emoji: '🐱', clicks: 3, points: 3, class: 'cat' },
+            { type: 'dog', emoji: '🐶', clicks: 3, points: 3, class: 'dog' },
+            { type: 'elephant', emoji: '🐘', clicks: 4, points: 5, class: 'elephant' },
+            { type: 'giraffe', emoji: '🦒', clicks: 4, points: 5, class: 'giraffe' }
+        ];
+
+        function startGame() {
+            document.getElementById('startScreen').style.display = 'none';
+            gameState.gameRunning = true;
+            gameState.score = 0;
+            gameState.timeLeft = 60;
+            gameState.speedMode = false;
+            
+            updateDisplay();
+            spawnInitialItems();
+            startTimer();
+        }
+
+        function restartGame() {
+            document.getElementById('gameOverScreen').style.display = 'none';
+            clearGameArea();
+            startGame();
+        }
+
+        function startTimer() {
+            const timer = setInterval(() => {
+                gameState.timeLeft--;
+                
+                if (gameState.timeLeft === 10) {
+                    gameState.speedMode = true;
+                    document.querySelector('.game-area').classList.add('speed-mode');
+                }
+                
+                if (gameState.timeLeft <= 0) {
+                    clearInterval(timer);
+                    endGame();
+                }
+                
+                updateDisplay();
+            }, 1000);
+        }
+
+        function spawnInitialItems() {
+            // 動物を生成
+            for (let i = 0; i < 15; i++) {
+                spawnAnimal();
+            }
+            
+            // 石鹸を生成
+            for (let i = 0; i < 3; i++) {
+                spawnSoap();
+            }
+            
+            // ペンキを生成
+            for (let i = 0; i < 5; i++) {
+                spawnPaint();
+            }
+        }
+
+        function spawnAnimal() {
+            const animalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+            const animal = createAnimal(animalType);
+            gameState.animals.push(animal);
+            document.getElementById('gameArea').appendChild(animal.element);
+        }
+
+        function createAnimal(type) {
+            const element = document.createElement('div');
+            element.className = `animal ${type.class} dirty`;
+            element.innerHTML = type.emoji;
+            element.style.left = Math.random() * 740 + 'px';
+            element.style.top = Math.random() * 440 + 'px';
+            
+            const animal = {
+                element: element,
+                type: type,
+                clicksLeft: type.clicks,
+                isClean: false
+            };
+            
+            element.addEventListener('click', () => clickAnimal(animal));
+            return animal;
+        }
+
+        function spawnSoap() {
+            const element = document.createElement('div');
+            element.className = 'soap';
+            element.innerHTML = '🧼';
+            element.style.left = Math.random() * 750 + 'px';
+            element.style.top = Math.random() * 450 + 'px';
+            
+            const soap = {
+                element: element,
+                clicksLeft: 5
+            };
+            
+            element.addEventListener('click', () => clickSoap(soap));
+            gameState.soaps.push(soap);
+            document.getElementById('gameArea').appendChild(element);
+        }
+
+        function spawnPaint() {
+            const element = document.createElement('div');
+            element.className = 'paint';
+            element.style.left = Math.random() * 760 + 'px';
+            element.style.top = Math.random() * 460 + 'px';
+            
+            element.addEventListener('click', () => hitPaint());
+            gameState.paints.push(element);
+            document.getElementById('gameArea').appendChild(element);
+        }
+
+        function clickAnimal(animal) {
+            if (!gameState.gameRunning || animal.isClean) return;
+            
+            animal.clicksLeft--;
+            animal.element.classList.add('cleaning');
+            setTimeout(() => animal.element.classList.remove('cleaning'), 300);
+            
+            if (animal.clicksLeft <= 0) {
+                animal.isClean = true;
+                animal.element.classList.remove('dirty');
+                animal.element.classList.add('clean');
+                
+                const points = animal.type.points;
+                gameState.score += points;
+                showClickIndicator(animal.element, `+${points}`);
+                
+                setTimeout(() => {
+                    animal.element.remove();
+                    gameState.animals = gameState.animals.filter(a => a !== animal);
+                    if (gameState.gameRunning) spawnAnimal();
+                }, 1000);
+            }
+            
+            updateDisplay();
+        }
+
+        function clickSoap(soap) {
+            if (!gameState.gameRunning) return;
+            
+            soap.clicksLeft--;
+            soap.element.style.transform = 'scale(0.9)';
+            setTimeout(() => soap.element.style.transform = 'scale(1)', 100);
+            
+            if (soap.clicksLeft <= 0) {
+                // 石鹸効果：周囲の動物を素早く綺麗に
+                const soapRect = soap.element.getBoundingClientRect();
+                gameState.animals.forEach(animal => {
+                    if (!animal.isClean) {
+                        const animalRect = animal.element.getBoundingClientRect();
+                        const distance = Math.sqrt(
+                            Math.pow(soapRect.left - animalRect.left, 2) + 
+                            Math.pow(soapRect.top - animalRect.top, 2)
+                        );
+                        
+                        if (distance < 120) {
+                            animal.clicksLeft = Math.max(1, animal.clicksLeft - 2);
+                        }
+                    }
+                });
+                
+                const bonusPoints = gameState.animals.filter(a => a.isClean).length * 5 + 5;
+                gameState.score += bonusPoints;
+                showClickIndicator(soap.element, `+${bonusPoints}🧼`);
+                
+                soap.element.remove();
+                gameState.soaps = gameState.soaps.filter(s => s !== soap);
+                if (gameState.gameRunning) spawnSoap();
+            }
+            
+            updateDisplay();
+        }
+
+        function hitPaint() {
+            if (!gameState.gameRunning) return;
+            
+            // ペンキ効果：進行中の動物をリセット
+            gameState.animals.forEach(animal => {
+                if (!animal.isClean && animal.clicksLeft < animal.type.clicks) {
+                    animal.clicksLeft = animal.type.clicks;
+                    animal.element.style.filter = 'hue-rotate(270deg)';
+                    setTimeout(() => animal.element.style.filter = '', 1000);
+                }
+            });
+            
+            showClickIndicator(event.target, '💔リセット');
+        }
+
+        function showClickIndicator(element, text) {
+            const indicator = document.createElement('div');
+            indicator.className = 'click-indicator';
+            indicator.textContent = text;
+            indicator.style.left = element.offsetLeft + 30 + 'px';
+            indicator.style.top = element.offsetTop + 'px';
+            
+            document.getElementById('gameArea').appendChild(indicator);
+            setTimeout(() => indicator.remove(), 1000);
+        }
+
+        function updateDisplay() {
+            document.getElementById('score').textContent = gameState.score;
+            document.getElementById('timer').textContent = gameState.timeLeft;
+        }
+
+        function endGame() {
+            gameState.gameRunning = false;
+            document.getElementById('finalScore').textContent = gameState.score;
+            
+            let message = '';
+            if (gameState.score >= 200) message = '🌟 素晴らしい！洗濯マスター！';
+            else if (gameState.score >= 100) message = '👏 とても上手！';
+            else if (gameState.score >= 50) message = '😊 なかなかいいね！';
+            else message = '💪 次はもっと頑張ろう！';
+            
+            document.getElementById('scoreMessage').textContent = message;
+            document.getElementById('gameOverScreen').style.display = 'flex';
+        }
+
+        function clearGameArea() {
+            gameState.animals.forEach(animal => animal.element.remove());
+            gameState.soaps.forEach(soap => soap.element.remove());
+            gameState.paints.forEach(paint => paint.remove());
+            
+            gameState.animals = [];
+            gameState.soaps = [];
+            gameState.paints = [];
+            
+            document.querySelector('.game-area').classList.remove('speed-mode');
+        }
+
+        // 継続的に新しいアイテムを生成
+        setInterval(() => {
+            if (gameState.gameRunning) {
+                if (Math.random() < 0.3) spawnAnimal();
+                if (Math.random() < 0.1) spawnSoap();
+                if (Math.random() < 0.15) spawnPaint();
+            }
+        }, 2000);
+    </script>
+</body>
+</html>
